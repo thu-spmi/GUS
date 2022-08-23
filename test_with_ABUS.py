@@ -12,12 +12,6 @@ import torch
 import json
 import argparse
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--device', default='cpu')
-parser.add_argument('--path', default='none')
-args = parser.parse_args()
-
-
 slot_map={'leave':'leaveAt', 'leaveat':'leaveAt', 'arrive':'arriveBy', 'arriveby':'arriveBy',
           'id':'trainID', 'trainid':'trainID', 'car':'car type'}
 def set_seed(r_seed):
@@ -59,14 +53,14 @@ def get_ABUS(cuda_device='cpu'):
     analyzer = Analyzer(user_agent=user_agent, dataset='multiwoz')
     return analyzer
 
-def test_end2end():
-    print('Model path:', args.path)
-    sys_agent=turn_level_session(DS_path=args.path, device1=args.device)
-    analyzer = get_ABUS(args.device)
+def test_end2end(model_path, device):
+    print('Model path:', model_path)
+    sys_agent=turn_level_session(DS_path=model_path, device1=device)
+    analyzer = get_ABUS(device)
 
     set_seed(20200202)
     dial_nums=1000
-    save_path='analysis/' + args.path.split('/')[-2]+'_{}.json'.format(dial_nums)
+    save_path='analysis/' + model_path.split('/')[-2]+'_{}.json'.format(dial_nums)
     analyzer.comprehensive_analyze(sys_agent=sys_agent, model_name='turn-level-GPT',\
         total_dialog=dial_nums, save_path=save_path, return_dial=False)
 
@@ -82,4 +76,8 @@ def test_policy():
         print(goal)
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--device', default='cpu')
+    parser.add_argument('--path', default='none')
+    args = parser.parse_args(args.path, args.device)
     test_end2end()

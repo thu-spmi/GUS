@@ -279,8 +279,6 @@ class MultiWozReader(_ReaderBase):
         self.add_sepcial_tokens()
 
         self.domain_files = json.loads(open(cfg.domain_file_path, 'r').read())
-        self.slot_value_set = json.loads(
-            open(cfg.slot_value_set_path, 'r').read())
         
         test_list = [l.strip().lower()
                      for l in open(cfg.test_list, 'r').readlines()]

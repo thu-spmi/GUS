@@ -18,7 +18,6 @@ import time
 import logging
 import json
 import numpy as np
-from compute_joint_acc import compute_jacc
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 from config import global_config as cfg
@@ -207,7 +206,6 @@ class Model(object):
                         score=F1*100
                     else:
                         eval_result=self.validate_fast(data='dev')
-                        self.tb_writer.add_scalar('joint_goal',eval_result['joint_acc'],epoch)
                         self.tb_writer.add_scalar('match',eval_result['match'],epoch)
                         self.tb_writer.add_scalar('success',eval_result['success'],epoch)
                         self.tb_writer.add_scalar('bleu',eval_result['bleu'],epoch)
@@ -534,12 +532,11 @@ class Model(object):
         if os.path.exists(result_path) and cfg.mode=='test' and cfg.use_existing_result:
             #results,field=self.reader.load_result(result_path)
             results=json.load(open(result_path, 'r'))
-            joint_acc=compute_jacc(results)
             input_data=self.prepare_for_std_eval(data=results)
             cfg.use_true_bspn_for_ctr_eval=False
             bleu, success, match = self.evaluator.validation_metric(results)
             score = 0.5 * (success + match) + bleu
-            logging.info('[Old] validation %2.2f  %2.2f  %2.2f  %.2f  %.3f' % (match, success, bleu, score, joint_acc))
+            logging.info('[Old] validation %2.2f  %2.2f  %2.2f  %.2f' % (match, success, bleu, score))
             if self.std_evaluator:
                 std_metrics = self.std_evaluator.evaluate(input_data)
                 bleu=std_metrics['bleu']['damd']
@@ -547,14 +544,13 @@ class Model(object):
                 success=std_metrics['success']['success']['total']
                 score = 0.5 * (success + match) + bleu
                 logging.info(std_metrics)
-                logging.info('[std] validation %2.2f  %2.2f  %2.2f  %.2f  %.3f' % (match, success, bleu, score, joint_acc))
+                logging.info('[std] validation %2.2f  %2.2f  %2.2f  %.2f' % (match, success, bleu, score))
 
             eval_results = {}
             eval_results['bleu'] = bleu
             eval_results['success'] = success
             eval_results['match'] = match
             eval_results['score'] = score
-            eval_results['joint_acc']=joint_acc
             return eval_results
         
         # valid_losses = []
@@ -586,12 +582,11 @@ class Model(object):
         results, _ = self.reader.wrap_result_lm(result_collection)
         logging.info('Inference time:{:.3f} min'.format((time.time()-st)/60))
 
-        joint_acc=compute_jacc(results)
         input_data=self.prepare_for_std_eval(data=results)
         cfg.use_true_bspn_for_ctr_eval=False
         bleu, success, match = self.evaluator.validation_metric(results)
         score = 0.5 * (success + match) + bleu
-        logging.info('[Old] validation %2.2f  %2.2f  %2.2f  %.2f  %.3f' % (match, success, bleu, score, joint_acc))
+        logging.info('[Old] validation %2.2f  %2.2f  %2.2f  %.2f' % (match, success, bleu, score))
         if self.std_evaluator:
             std_metrics = self.std_evaluator.evaluate(input_data)
             bleu=std_metrics['bleu']['damd']
@@ -601,7 +596,7 @@ class Model(object):
             if cfg.mode=='test':
                 logging.info(std_metrics)
             
-            logging.info('[Std] validation %2.2f  %2.2f  %2.2f  %.2f  %.3f' % (match, success, bleu, score, joint_acc))
+            logging.info('[Std] validation %2.2f  %2.2f  %2.2f  %.2f' % (match, success, bleu, score))
         if data=='train':# divide into 10 parts
             step=len(results)//10
             for i in range(10):
@@ -616,7 +611,6 @@ class Model(object):
         eval_results['success'] = success
         eval_results['match'] = match
         eval_results['score'] = score
-        eval_results['joint_acc']=joint_acc
         cfg.batch_size=origin_batch_size
         return eval_results
 
@@ -890,12 +884,6 @@ def parse_arg_cfg(args):
     return
 
 def main():
-    if not os.path.exists('./experiments'):
-        os.mkdir('./experiments')
-
-    if not os.path.exists('./experiments_21'):
-        os.mkdir('./experiments_21')
-
     parser = argparse.ArgumentParser()
     parser.add_argument('-mode')
     parser.add_argument('-cfg', nargs='*')
@@ -903,6 +891,17 @@ def main():
 
     cfg.mode = args.mode
     parse_arg_cfg(args)
+    if cfg.dataset==0:
+        if not os.path.exists('./experiments'):
+            os.mkdir('./experiments')
+        if not os.path.exists('./log'):
+            os.mkdir('./log')
+    elif cfg.dataset==1:
+        if not os.path.exists('./experiments_21'):
+            os.mkdir('./experiments_21')
+        if not os.path.exists('./log21'):
+            os.mkdir('./log21')
+
     if 'test' in args.mode:
         cfg.eval_load_path=cfg.gpt_path
     else:  # train

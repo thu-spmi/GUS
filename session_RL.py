@@ -15,7 +15,7 @@ from torch.utils.tensorboard import SummaryWriter
 from transformers import GPT2LMHeadModel
 from transformers.optimization import AdamW, get_linear_schedule_with_warmup
 from session import turn_level_session
-from test_LsGPT import get_ABUS
+from test_with_ABUS import get_ABUS
 def parse_arg_cfg(args):
     # add args to cfg
     if args.cfg:
@@ -47,6 +47,8 @@ class RL_session():
         self.global_output2=2
         # tensorboard
         if cfg.save_log:
+            if not os.path.exists('./log_rl'):
+                os.mkdir('./log_rl')
             log_path='./log_rl/log_{}'.format(cfg.exp_no)
             if os.path.exists(log_path):
                 shutil.rmtree(log_path)
