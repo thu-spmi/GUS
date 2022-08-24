@@ -49,7 +49,7 @@ To evaluate DSs/USs based on the annotations in corpus, run
 bash test.sh $GPU $DS_PATH
 bash test_us.sh $GPU $US_PATH
 ```
-### Interaction Evaluation
+### Interaction with GUS
 To evaluate the interaction quality of DSs and GUS, run
 ```
 bash eval_RL.sh $GPU $DS_PATH $US_PATH
