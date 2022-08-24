@@ -57,9 +57,9 @@ bash eval_RL.sh $GPU $DS_PATH $US_PATH
 ### Interaction with ABUS
 To test with ABUS, run
 ```
-python test_with_ABUS --device $DEVICE --path $DS_PATH
+python test_with_ABUS.py --device $DEVICE --path $DS_PATH
 ```
 Note that you need to save the interaction results and evaluate them with
 ```
-python analyze_result --result_path $RESULT_PATH
+python analyze_result.py --result_path $RESULT_PATH
 ```
